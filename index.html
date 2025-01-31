@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grandpa's Game</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #3498db;
+            --background-color: #f5f6fa;
+            --text-color: #2c3e50;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            border-bottom: 2px solid var(--background-color);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: var(--secondary-color);
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .theme {
+            font-size: 1.2em;
+            color: var(--accent-color);
+            margin-bottom: 30px;
+            padding: 10px;
+            background-color: var(--background-color);
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .puzzle-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .puzzle {
+            background-color: var(--background-color);
+            padding: 25px;
+            border-radius: 12px;
+            transition: transform 0.2s, opacity 0.3s;
+            opacity: 0;
+            display: none;
+        }
+
+        .puzzle.active {
+            display: block;
+            opacity: 1;
+        }
+
+        .puzzle:hover {
+            transform: translateY(-2px);
+        }
+
+        .puzzle-number {
+            font-weight: 600;
+            color: var(--accent-color);
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .clue {
+            font-size: 1.4em;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .answer-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .answer-input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid var(--secondary-color);
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        .answer-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .submit-btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s;
+            font-family: inherit;
+            font-weight: 500;
+        }
+
+        .submit-btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-1px);
+        }
+
+        .submit-btn:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .feedback {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .feedback.visible {
+            opacity: 1;
+        }
+
+        .feedback.correct {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .feedback.incorrect {
+            background-color: var(--error-color);
+            color: white;
+        }
+
+        .progress {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+            font-weight: 500;
+        }
+
+        @media (max-width: 600px) {
+            .answer-form {
+                flex-direction: column;
+            }
+
+            .submit-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Grandpa's Game</h1>
+            <p class="subtitle">Daily Number & Letter Riddles</p>
+            <p class="theme">Today's Theme: <span id="theme-text">General Knowledge</span></p>
+        </header>
+
+        <div class="puzzle-container" id="puzzle-container">
+            <!-- Puzzles will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <script>
+        const puzzleDatabase = {
+            'General Knowledge': [
+                { clue: '88 K on a P', answer: '88 Keys on a Piano' },
+                { clue: '52 C in a D', answer: '52 Cards in a Deck' },
+                { clue: '7 D in a W', answer: '7 Days in a Week' },
+                { clue: '12 M in a Y', answer: '12 Months in a Year' },
+                { clue: '26 L in the A', answer: '26 Letters in the Alphabet' },
+                { clue: '60 S in a M', answer: '60 Seconds in a Minute' },
+                { clue: '360 D in a C', answer: '360 Degrees in a Circle' },
+                { clue: '32 T in a M', answer: '32 Teeth in a Mouth' }
+            ],
+            'U.S. Government': [
+                { clue: '9 J on the SC', answer: '9 Justices on the Supreme Court' },
+                { clue: '100 S in C', answer: '100 Senators in Congress' },
+                { clue: '435 R in the H', answer: '435 Representatives in the House' },
+                { clue: '27 A to the C', answer: '27 Amendments to the Constitution' },
+                { clue: '50 S in the U', answer: '50 States in the Union' }
+            ],
+            'Technology': [
+                { clue: '8 B in a B', answer: '8 Bits in a Byte' },
+                { clue: '104 K on a KB', answer: '104 Keys on a Keyboard' },
+                { clue: '3 B on a M', answer: '3 Buttons on a Mouse' },
+                { clue: '12 F on a KB', answer: '12 Function keys on a Keyboard' }
+            ],
+            'Nature': [
+                { clue: '7 C in a R', answer: '7 Colors in a Rainbow' },
+                { clue: '4 P of the M', answer: '4 Phases of the Moon' },
+                { clue: '3 L of an I', answer: '3 Leaves of an Irish clover' },
+                { clue: '12 S of the Z', answer: '12 Signs of the Zodiac' }
+            ],
+            'Games & Toys': [
+                { clue: '6 S on a RC', answer: '6 Sides on a Rubiks Cube' },
+                { clue: '64 S on a CB', answer: '64 Squares on a Chessboard' },
+                { clue: '28 D in a DS', answer: '28 Dominoes in a Standard Set' },
+                { clue: '8 P in a G', answer: '8 Pawns in a Game' }
+            ],
+            'Food': [
+                { clue: '31 F of IC', answer: '31 Flavors of Ice Cream' },
+                { clue: '57 V of H', answer: '57 Varieties of Heinz' },
+                { clue: '5 L in a WC', answer: '5 Layers in a Wedding Cake' },
+                { clue: '13 D in a BD', answer: '13 Doughnuts in a Bakers Dozen' }
+            ],
+            'Geography': [
+                { clue: '7 C in the W', answer: '7 Continents in the World' },
+                { clue: '5 O on E', answer: '5 Oceans on Earth' },
+                { clue: '4 D on a C', answer: '4 Directions on a Compass' },
+                { clue: '13 S on the OF', answer: '13 Stripes on the Original Flag' }
+            ]
+        };
+
+        let currentPuzzleIndex = 0;
+        const themes = Object.keys(puzzleDatabase);
+        let dailyPuzzles = [];
+
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
+        function getRandomPuzzles(theme, count = 5) {
+            const puzzles = puzzleDatabase[theme] || puzzleDatabase['General Knowledge'];
+            return shuffleArray(puzzles).slice(0, count);
+        }
+
+        function createPuzzleElement(puzzle, number) {
+            const div = document.createElement('div');
+            div.className = 'puzzle' + (number === 1 ? ' active' : '');
+            
+            div.innerHTML = `
+                <div class="puzzle-number">Puzzle ${number}</div>
+                <div class="clue">${puzzle.clue}</div>
+                <div class="answer-form">
+                    <input type="text" class="answer-input" placeholder="Enter your answer...">
+                    <button class="submit-btn">Submit</button>
+                </div>
+                <div class="feedback"></div>
+            `;
+
+            const button = div.querySelector('.submit-btn');
+            const input = div.querySelector('.answer-input');
+            const feedback = div.querySelector('.feedback');
+
+            button.addEventListener('click', () => {
+                const userAnswer = input.value.trim().toLowerCase();
+                const correctAnswer = puzzle.answer.toLowerCase();
+
+                if (userAnswer === correctAnswer) {
+                    feedback.textContent = 'Correct! Well done!';
+                    feedback.className = 'feedback correct visible';
+                    button.disabled = true;
+                    input.disabled = true;
+                    
+                    // Show next puzzle after a brief delay
+                    setTimeout(() => {
+                        if (currentPuzzleIndex < 4) {
+                            currentPuzzleIndex++;
+                            const activeContainer = document.querySelector('.puzzle.active');
+                            if (activeContainer) {
+                                activeContainer.querySelector('.puzzle-number').textContent = `Puzzle ${currentPuzzleIndex + 1}`;
+                            }
+                            document.querySelectorAll('.puzzle').forEach((p, index) => {
+                                p.className = 'puzzle' + (index === currentPuzzleIndex ? ' active' : '');
+                            });
+                        }
+                    }, 1000);
+                } else {
+                    feedback.textContent = 'Not quite right. Try again!';
+                    feedback.className = 'feedback incorrect visible';
+                }
+            });
+
+            return div;
+        }
+
+        function loadDailyPuzzles() {
+            // Start with General Knowledge
+            const theme = 'General Knowledge';
+            document.getElementById('theme-text').textContent = theme;
+            
+            dailyPuzzles = getRandomPuzzles(theme);
+            const container = document.getElementById('puzzle-container');
+            
+            dailyPuzzles.forEach((puzzle, index) => {
+                const puzzleElement = createPuzzleElement(puzzle, index + 1);
+                container.appendChild(puzzleElement);
+            });
+            
+
+        }
+
+        // Initialize the game when the page loads
+        window.onload = loadDailyPuzzles;
+    </script>
+</body>
+</html>
